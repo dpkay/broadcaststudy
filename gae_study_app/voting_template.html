@@ -1,0 +1,111 @@
+<html>
+  <head>
+    <link type="text/css" rel="stylesheet" href="/stylesheets/study-stylesheet.css" />
+    <!--script src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script-->  
+    <script src="js/jquery-1.6.4.min.js"></script>  
+    <script src="js/study.js"></script>
+  </head>
+  <body onload="updateCount()">
+    <div class="topspacer"></div>
+    <h1>Sports Performance User Study</h1>
+    <p>
+    Nullam in felis non sapien egestas ullamcorper. Nulla facilisi. Morbi elit dui, egestas ut facilisis sit amet, scelerisque eget libero. Cras pellentesque laoreet odio at rhoncus. Pellentesque euismod elit non orci faucibus vitae cursus dolor iaculis. Praesent imperdiet dolor turpis, sed pulvinar justo. Donec porttitor mollis eros, non sodales diam euismod viverra. Quisque laoreet tincidunt laoreet.
+    </p>
+    <div class="statusbar statusbar-top">
+      <div class="statusbar-content">
+        Welcome, {{ username }}! <a href="{{logout_url}}" class="logout">Logout</a>
+      </div>
+    </div>
+    <div class="statusbar statusbar-bottom">
+      <div class="statusbar-content">
+        Your progress:
+          <span class="progresscount" id="completedcount">#</span>
+        out of
+          <span class="progresscount" id="totalcount">#</span>
+        questions (<span class="progresscount" id="percentage">#</span>)
+        answered.
+      </div>
+    </div>
+    <div class="task-title">
+      <h2>General Information</h2>
+    </div>
+    <!--table class="task-media">
+      <tr class="question-row">
+        <td class="first-column"XXXXXXXXXXXX
+    </table-->
+    {% for task in tasks %}
+      <div class="task-title">
+        <h2>{{loop.index}}. {{ task.name }}</h2>
+      </div>
+      <div class="task">
+        <table class="task-media" id="{{ task.name }}">
+          <!--tr class="title-row">
+            <td class="first-column"></td>
+            <td colspan=3>
+              <h2>{{loop.index}}. {{ task.name }}</h2>
+            </td>
+          </tr-->
+          <tr class="media-row">
+            <td class="first-column"></td>
+            <td class="media-cell"><iframe type="text/html" width="320" height="205"
+                    src="http://www.youtube.com/embed/{{ task.youtube_id1 }}?autoplay=0"
+                    frameborder="0"></iframe></td>
+            <td class="media-cell"><iframe type="text/html" width="320" height="205"
+                    src="http://www.youtube.com/embed/{{ task.youtube_id2 }}?autoplay=0"
+                    frameborder="0"></iframe></td>
+            <td class="media-cell"><iframe type="text/html" width="320" height="205"
+                    src="http://www.youtube.com/embed/{{ task.youtube_id3 }}?autoplay=0"
+                    frameborder="0"></iframe></td>
+          </tr>
+          <tr class="question-row {%- if task.selected_best %} completed{%endif%}"
+              id="question_{{task.name}}_best">
+            <td class="first-column"></td>
+            <td colspan=3>
+              Please indicate which video you like <b>MOST</b>:
+            </td>
+          </tr>
+          <tr class="button-row {%- if task.selected_best %} completed{%endif%}"
+              id="{{task.name}}_best">
+
+            {%- macro taskButton(suffix, selected, value) %}
+            <td class={% if value==0 %}"first-column"{% else %}"button-cell"{%endif%}>
+              <input type="radio" class="vote-button"
+                     name="{{task.name}}{{suffix}}" value="{{value}}"
+                     {%- if (selected==value) or
+                            (not selected and value==0) %} checked{% endif %}/>
+            </td>
+            {%- endmacro -%}
+
+            {{ taskButton('_best', task.selected_best, 0) }}
+            {{ taskButton('_best', task.selected_best, 1) }}
+            {{ taskButton('_best', task.selected_best, 2) }}
+            {{ taskButton('_best', task.selected_best, 3) }}
+          </tr>
+          <tr class="question-row {%- if task.selected_worst %} completed{%endif%}"
+              id="question_{{task.name}}_worst">
+            <td class="first-column"></td>
+            <td colspan=3>
+              Please indicate which video you like <b>LEAST</b>:
+            </td>
+          </tr>
+          <tr class="button-row {%- if task.selected_worst %} completed{%endif%}">
+          <!--tr {%- if task.selected_worst %} class="completed" {%-endif %}-->
+            {{ taskButton('_worst', task.selected_worst, 0) }}
+            {{ taskButton('_worst', task.selected_worst, 1) }}
+            {{ taskButton('_worst', task.selected_worst, 2) }}
+            {{ taskButton('_worst', task.selected_worst, 3) }}
+          </tr>
+        </table>
+        </div>
+      </div>
+      <div class="taskspacer"></div>
+    {% endfor %}
+    <h2>Thank you very much for your participation!</h2>
+    <div class="bottomspacer"></div>
+    <script>
+      $("input[class='vote-button']").change(function() {
+        foo($(this));
+      });
+    </script>
+  </body>
+</html>
