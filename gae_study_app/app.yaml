@@ -12,7 +12,7 @@ handlers:
   static_dir: js
 
 - url: /.*
-  script: blah.app
+  script: main.app
 
 
 libraries:

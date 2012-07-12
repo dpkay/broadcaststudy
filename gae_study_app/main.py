@@ -75,7 +75,7 @@ class MainPage(webapp2.RequestHandler):
             'tasks': tasks
         }
 
-        template = jinja_environment.get_template('study-template-v1.html')
+        template = jinja_environment.get_template('voting_template.html')
         self.response.out.write(template.render(template_values))
 
 
