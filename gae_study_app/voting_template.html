@@ -1,8 +1,10 @@
 <html>
   <head>
-    <link type="text/css" rel="stylesheet" href="/main.css" />
+    <link type="text/css" rel="stylesheet" href="/voting.css" />
     <script src="/jquery-1.6.4.min.js"></script>  
     <script src="/voting.js"></script>
+    <script type="text/javascript" src="/swfobject.js"></script>    
+    <script type="text/javascript" src="/youtubePlayer.js"></script>    
   </head>
   <body onload="updateCount()">
     <div class="topspacer"></div>
@@ -34,33 +36,46 @@
     </table-->
     {% for task in tasks %}
       <div class="task-title">
-        <h2>{{loop.index}}. {{ task.name }}</h2>
+        <h2>Task {{loop.index}} ({{ task.prettyName }})</h2>
       </div>
       <div class="task">
         <table class="task-media" id="{{ task.name }}">
-          <!--tr class="title-row">
-            <td class="first-column"></td>
-            <td colspan=3>
-              <h2>{{loop.index}}. {{ task.name }}</h2>
-            </td>
-          </tr-->
           <tr class="media-row">
             <td class="first-column"></td>
-            <td class="media-cell"><iframe type="text/html" width="320" height="205"
-                    src="http://www.youtube.com/embed/{{ task.youtube_id1 }}?autoplay=0"
-                    frameborder="0"></iframe></td>
-            <td class="media-cell"><iframe type="text/html" width="320" height="205"
-                    src="http://www.youtube.com/embed/{{ task.youtube_id2 }}?autoplay=0"
-                    frameborder="0"></iframe></td>
-            <td class="media-cell"><iframe type="text/html" width="320" height="205"
-                    src="http://www.youtube.com/embed/{{ task.youtube_id3 }}?autoplay=0"
-                    frameborder="0"></iframe></td>
+
+            {%- macro youtubeClip(id) %}
+            <td class="media-cell">
+              <div id="{{id}}_container" class="player-container">
+                <div class="player-container-text">
+                  Push the button below to play all three the videos.
+                </div>
+              </div>
+            </td>
+            {%- endmacro -%}
+
+            {{ youtubeClip(task.youtube_id1) }}
+            {{ youtubeClip(task.youtube_id2) }}
+            {{ youtubeClip(task.youtube_id3) }}
+          </tr>
+          <tr class="playbutton-row">
+            <td class="first-column"></td>
+            <td colspan=3 class="playbutton-cell">
+              <input type="button" class="playbutton" value="PLAY ALL" id="playAll_{{task.name}}"/>
+            </td>
           </tr>
           <tr class="question-row {%- if task.selected_best %} completed{%endif%}"
               id="question_{{task.name}}_best">
             <td class="first-column"></td>
             <td colspan=3>
-              Please indicate which video you like <b>MOST</b>:
+              <p>Please indicate which video you like <b>MOST</b>:
+              </p>
+              <script>
+                $('#playAll_{{task.name}}').click(function() {
+                  this.value = "PLAY AGAIN";
+                  var ids = ["{{task.youtube_id1}}", "{{task.youtube_id2}}", "{{task.youtube_id3}}"];
+                  playAll(ids);
+                });
+              </script>
             </td>
           </tr>
           <tr class="button-row {%- if task.selected_best %} completed{%endif%}"
@@ -70,6 +85,7 @@
             <td class={% if value==0 %}"first-column"{% else %}"button-cell"{%endif%}>
               <input type="radio" class="vote-button"
                      name="{{task.name}}{{suffix}}" value="{{value}}"
+                     id="{{task.name}}{{suffix}}_{{value}}"
                      {%- if (selected==value) or
                             (not selected and value==0) %} checked{% endif %}/>
             </td>
@@ -103,7 +119,7 @@
     <div class="bottomspacer"></div>
     <script>
       $("input[class='vote-button']").change(function() {
-        foo($(this));
+        doVote($(this));
       });
     </script>
   </body>

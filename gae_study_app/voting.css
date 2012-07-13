@@ -28,6 +28,11 @@ a.logout {
   background-color: #333;
 }
 
+.question-row.failed,
+.button-row.failed{
+  background-color: #833;
+}
+
 .question-row.completed,
 .button-row.completed {
   background-color: #383;
@@ -41,7 +46,13 @@ a.logout {
   width: 100%;
   text-align: center;
   border-top: medium solid #222;
-  background-color: #544;
+  background-color: #444;
+}
+
+.playbutton-row {
+%  border-top: medium solid #222;
+  text-align: center;
+  vertical-align: middle;
 }
 
 .question-row.completed {
@@ -51,7 +62,7 @@ a.logout {
 .button-row {
   text-align: center;
   padding: 5px;
-  background-color: #544;
+  background-color: #444;
 }
 
 .statusbar {
@@ -71,6 +82,7 @@ a.logout {
 
 .media-cell {
   padding: 20px;
+  padding-bottom: 10px;
 }
 
 
@@ -143,4 +155,45 @@ h1, h2 {
   background-color: #2a2a2a;
   border-right: medium solid #222;
   padding: 3px;
+}
+
+.playbutton-cell {
+  padding: 4px;
+  padding-bottom: 10px;
+}
+
+.playbutton {
+  padding: 10px;
+  %border: 2px solid #222;
+  border: 2px outset #777;
+  background: #555;
+  font-family: Lucida Grande, Trebuchet MS, Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  color: #eee;
+  width: 500px;
+}
+
+.player-container {
+  display: block;
+  width: 320px;
+  height: 205px;
+  color: #ccc;
+  background: #000;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.player-container-text {
+  clear: both;
+  height: 205px;
+  text-align: center;
+  vertical-align: middle;
+  padding: 50px;
+}
+
+
+.playbutton:hover {
+  %border: 2px solid #444;
+  border: 2px outset #999;
+  background: #777;
 }
