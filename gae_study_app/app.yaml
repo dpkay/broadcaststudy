@@ -5,9 +5,8 @@ api_version: 1
 threadsafe: true
 
 handlers:
-- url: /(.*\.(css|js))
-  static_files: \1 
-  upload: /(.*\.(css|js))
+- url: /public
+  static_dir: public
 
 - url: /.*
   script: main.app

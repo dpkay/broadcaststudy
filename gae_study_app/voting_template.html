@@ -1,10 +1,10 @@
 <html>
   <head>
-    <link type="text/css" rel="stylesheet" href="/voting.css" />
-    <script src="/jquery-1.6.4.min.js"></script>  
-    <script src="/voting.js"></script>
-    <script type="text/javascript" src="/swfobject.js"></script>    
-    <script type="text/javascript" src="/youtubePlayer.js"></script>    
+    <link type="text/css" rel="stylesheet" href="/public/voting.css" />
+    <script src="/public/jquery-1.6.4.min.js"></script>  
+    <script src="/public/voting.js"></script>
+    <script type="text/javascript" src="/public/swfobject.js"></script>    
+    <script type="text/javascript" src="/public/youtubePlayer.js"></script>    
   </head>
   <body onload="updateCount()">
     <div class="topspacer"></div>
@@ -81,20 +81,20 @@
           <tr class="button-row {%- if task.selected_best %} completed{%endif%}"
               id="{{task.name}}_best">
 
-            {%- macro taskButton(suffix, selected, value) %}
+            {%- macro taskButton(suffix, selected, value, cameraName) %}
             <td class={% if value==0 %}"first-column"{% else %}"button-cell"{%endif%}>
               <input type="radio" class="vote-button"
-                     name="{{task.name}}{{suffix}}" value="{{value}}"
+                     name="{{task.name}}{{suffix}}" value="{{value}}_{{cameraName}}"
                      id="{{task.name}}{{suffix}}_{{value}}"
-                     {%- if (selected==value) or
+                     {%- if (selected==cameraName) or
                             (not selected and value==0) %} checked{% endif %}/>
             </td>
             {%- endmacro -%}
 
-            {{ taskButton('_best', task.selected_best, 0) }}
-            {{ taskButton('_best', task.selected_best, 1) }}
-            {{ taskButton('_best', task.selected_best, 2) }}
-            {{ taskButton('_best', task.selected_best, 3) }}
+            {{ taskButton('_best', task.selected_best, 0, 0) }}
+            {{ taskButton('_best', task.selected_best, 1, task.camera1) }}
+            {{ taskButton('_best', task.selected_best, 2, task.camera2) }}
+            {{ taskButton('_best', task.selected_best, 3, task.camera3) }}
           </tr>
           <tr class="question-row {%- if task.selected_worst %} completed{%endif%}"
               id="question_{{task.name}}_worst">
@@ -105,10 +105,10 @@
           </tr>
           <tr class="button-row {%- if task.selected_worst %} completed{%endif%}">
           <!--tr {%- if task.selected_worst %} class="completed" {%-endif %}-->
-            {{ taskButton('_worst', task.selected_worst, 0) }}
-            {{ taskButton('_worst', task.selected_worst, 1) }}
-            {{ taskButton('_worst', task.selected_worst, 2) }}
-            {{ taskButton('_worst', task.selected_worst, 3) }}
+            {{ taskButton('_worst', task.selected_worst, 0, 0) }}
+            {{ taskButton('_worst', task.selected_worst, 1, task.camera1) }}
+            {{ taskButton('_worst', task.selected_worst, 2, task.camera2) }}
+            {{ taskButton('_worst', task.selected_worst, 3, task.camera3) }}
           </tr>
         </table>
         </div>
