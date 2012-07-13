@@ -47,7 +47,7 @@
             <td class="media-cell">
               <div id="{{id}}_container" class="player-container">
                 <div class="player-container-text">
-                  Push the button below to play all three the videos.
+                  Push the button below to play all three videos.
                 </div>
               </div>
             </td>
@@ -63,7 +63,7 @@
               <input type="button" class="playbutton" value="PLAY ALL" id="playAll_{{task.name}}"/>
             </td>
           </tr>
-          <tr class="question-row {%- if task.selected_best %} completed{%endif%}"
+          <tr class="question-row {%- if task.selected_best and task.selected_best != 'X' %} completed{%endif%}"
               id="question_{{task.name}}_best">
             <td class="first-column"></td>
             <td colspan=3>
@@ -78,7 +78,7 @@
               </script>
             </td>
           </tr>
-          <tr class="button-row {%- if task.selected_best %} completed{%endif%}"
+          <tr class="button-row {%- if task.selected_best and task.selected_best != 'X' %} completed{%endif%}"
               id="{{task.name}}_best">
 
             {%- macro taskButton(suffix, selected, value, cameraName) %}
@@ -91,21 +91,21 @@
             </td>
             {%- endmacro -%}
 
-            {{ taskButton('_best', task.selected_best, 0, 0) }}
+            {{ taskButton('_best', task.selected_best, 0, 'X') }}
             {{ taskButton('_best', task.selected_best, 1, task.camera1) }}
             {{ taskButton('_best', task.selected_best, 2, task.camera2) }}
             {{ taskButton('_best', task.selected_best, 3, task.camera3) }}
           </tr>
-          <tr class="question-row {%- if task.selected_worst %} completed{%endif%}"
+          <tr class="question-row {%- if task.selected_worst and task.selected_worst != 'X' %} completed{%endif%}"
               id="question_{{task.name}}_worst">
             <td class="first-column"></td>
             <td colspan=3>
               Please indicate which video you like <b>LEAST</b>:
             </td>
           </tr>
-          <tr class="button-row {%- if task.selected_worst %} completed{%endif%}">
+          <tr class="button-row {%- if task.selected_worst and task.selected_worst != 'X' %} completed{%endif%}">
           <!--tr {%- if task.selected_worst %} class="completed" {%-endif %}-->
-            {{ taskButton('_worst', task.selected_worst, 0, 0) }}
+            {{ taskButton('_worst', task.selected_worst, 0, 'X') }}
             {{ taskButton('_worst', task.selected_worst, 1, task.camera1) }}
             {{ taskButton('_worst', task.selected_worst, 2, task.camera2) }}
             {{ taskButton('_worst', task.selected_worst, 3, task.camera3) }}

@@ -1,0 +1,21 @@
+<html>
+  <head>
+    <link type="text/css" rel="stylesheet" href="/public/voting.css" />
+  </head>
+  <body>
+    <h1>Distinguished Segments</h1>
+      <pre>segment_id score_1 score_7 score_8
+
+      {%- for segment in distinguishedSegments %}
+{{segment.id}} {{segment.A}} {{segment.B}} {{segment.C}}
+      {%- endfor -%}
+      </pre>
+    <h1>Normal Segments</h1>
+      <pre>segment_id score_1 score_7 score_8
+
+      {%- for segment in normalSegments %}
+{{segment.id}} {{segment.A}} {{segment.B}} {{segment.C}}
+      {%- endfor -%}
+      </pre>
+  </body>
+</html>

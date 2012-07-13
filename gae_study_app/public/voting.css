@@ -1,6 +1,7 @@
 body {
   font-family: Lucida Grande, Trebuchet MS, Helvetica, Arial, sans-serif;
   background-color: #DDDDDD;
+  text-align: center;
   margin: 0px;
   text-align: center;
 }
@@ -197,3 +198,9 @@ h1, h2 {
   border: 2px outset #999;
   background: #777;
 }
+
+
+pre {
+  border: thin dashed #000;
+}
+

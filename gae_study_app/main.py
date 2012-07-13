@@ -1,3 +1,5 @@
+import re
+import collections
 import cgi
 import datetime
 import urllib
@@ -16,6 +18,9 @@ from google.appengine.api import users
 from protorpc import messages
 from protorpc.wsgi import service
 from protorpc import remote
+
+distinguishedIndexes = [40, 80, 120, 160, 200,
+                        240, 280, 320, 360, 400]
 
 jinja_environment = jinja2.Environment(
   loader=jinja2.FileSystemLoader(os.path.dirname(__file__)))
@@ -55,13 +60,50 @@ def userId():
     return 0
 
 
-def userKey(user_id=userId()):
-  return db.Key.from_path('User', user_id)
+def userKey(user_id_cmd=userId):
+  return db.Key.from_path('User', user_id_cmd())
+
 
 def userName():
   return users.get_current_user().nickname()
 
-random.seed(userName())
+
+class StatsHandler(webapp2.RequestHandler):
+    def get(self):
+      voteQuery = Vote.all()
+      votes = voteQuery.fetch(9999)
+      segments = collections.defaultdict(lambda: collections.defaultdict(int))
+      for vote in votes:
+        result = re.match('segment(\d\d\d)_(.*)', vote.voteKey).groups()
+        if result[1] == 'best':
+          increment = +1
+        elif result[1] == 'worst':
+          increment = -1
+        segments[result[0]][vote.cameraName] += increment
+
+      # split and convert to normal dict
+      normalSegments = []
+      distinguishedSegments = []
+      for key, value in segments.iteritems():
+
+        # force creation of keys
+        value['A']
+        value['B']
+        value['C']
+
+        value = dict(value)
+        value['id'] = int(key)
+        if int(key) in distinguishedIndexes:
+          distinguishedSegments.append(value)
+        else:
+          normalSegments.append(value)
+
+      template_values = {
+          'distinguishedSegments': distinguishedSegments,
+          'normalSegments': normalSegments
+      }
+      template = jinja_environment.get_template('stats_template.html')
+      self.response.out.write(template.render(template_values))
 
 class MainPage(webapp2.RequestHandler):
     def get(self):
@@ -71,18 +113,19 @@ class MainPage(webapp2.RequestHandler):
           self.redirect(users.create_login_url(self.request.uri))
           return
 
+        print >>sys.stderr,userId(),userKey()
+        random.seed(userId())
+
         # initialize segments
         #distinguishedSegments = SegmentDict('distinguished_segments.yaml')
         segments = SegmentDict('segments.yaml')
-        distinguishedIndexes = [40, 80, 120, 160, 200,
-                                240, 280, 320, 360, 400]
 
         normalIndexes = set(segments.keys()) - set(distinguishedIndexes)
         #distinguishedSegments = {}
         #for i in distinguishedIndexes:
         #  distinguishedSegments[i] = allSegments[i]
 
-        chosenIndexes = random.sample(distinguishedIndexes, 5) +\
+        chosenIndexes = random.sample(distinguishedIndexes, 10) +\
                         random.sample(normalIndexes, 10)
 
         taskdict = {}
@@ -91,10 +134,10 @@ class MainPage(webapp2.RequestHandler):
           data = segments[index]
            
           prettyPrefix = 'D' if index in distinguishedIndexes else 'N'
-          #name = 'segment%03d' % index 
+          name = 'segment%03d' % index 
           task = {}
           task['prettyName'] = prettyPrefix + str(index)
-          name = task['prettyName']
+#          name = task['prettyName']
           task['name'] = name
           task['index'] = index
 
@@ -118,6 +161,11 @@ class MainPage(webapp2.RequestHandler):
         for vote in votes:
           taskName, suffix = vote.voteKey.split('_') 
           taskdict[taskName]['selected_%s' % suffix] = vote.cameraName
+#          try:
+#            taskdict[taskName]['selected_%s' % suffix] = vote.cameraName
+#          except KeyError:
+#            # that's 
+#            pass
 
         # we can now throw away the keys, so
         # convert augmented task dictionary to list.
@@ -165,23 +213,24 @@ class RPCHandler(webapp2.RequestHandler):
 #####        result['oldValue'] = oldValue
 #####   JUST JUMP BACK TO 0, THATS OK
         result['oldValue'] = 0
+        cameraName = 'X'
 
       else: 
-        # ok, that value is different from the opposite... store it to db
-        voteQuery = Vote.all().ancestor(userKey()).filter("voteKey = ", key)
-        print >>sys.stderr, keyOpposite
-        votes = voteQuery.fetch(1)
-        try:
-          vote = votes[0]
-        except IndexError:
-          vote = Vote(parent=userKey())
-          vote.voteKey = req['key']
-        vote.cameraName = cameraName
-        vote.put()
-        if cameraName != '0':
+        # ok, that value is different from the opposite... give a nice result
+        if cameraName != 'X':
           result['status'] = "stored"
         else:
           result['status'] = "neutral"
+
+      voteQuery = Vote.all().ancestor(userKey()).filter("voteKey = ", key)
+      votes = voteQuery.fetch(1)
+      try:
+        vote = votes[0]
+      except IndexError:
+        vote = Vote(parent=userKey())
+        vote.voteKey = req['key']
+      vote.cameraName = cameraName
+      vote.put()
 
       # send result to client
       self.response.out.write(json.dumps(result))
@@ -191,5 +240,6 @@ class RPCHandler(webapp2.RequestHandler):
       self.error(403)
 
 app = webapp2.WSGIApplication([('/', MainPage),
-                               ('/rpc', RPCHandler)],
+                               ('/rpc', RPCHandler),
+                               ('/stats', StatsHandler)],
                               debug=True)
