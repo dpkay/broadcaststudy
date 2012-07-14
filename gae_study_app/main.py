@@ -19,7 +19,7 @@ from protorpc import messages
 from protorpc.wsgi import service
 from protorpc import remote
 
-distinguishedIndexes = [40, 80, 120, 160, 200,
+distinguishedIndexes = [40, 80, 120, 160, 190,
                         240, 280, 320, 360, 400]
 
 jinja_environment = jinja2.Environment(
@@ -48,9 +48,10 @@ class SegmentDict(dict):
 class Vote(db.Model):
   voteKey = db.StringProperty()
   cameraName = db.StringProperty()
-  #value = db.IntegerProperty()
-  #date = db.DateTimeProperty(auto_now_add=True)
 
+class Metavote(db.Model):
+  voteKey = db.StringProperty()
+  value = db.StringProperty()
 
 def userId():
   user = users.get_current_user()
@@ -126,7 +127,7 @@ class MainPage(webapp2.RequestHandler):
         #  distinguishedSegments[i] = allSegments[i]
 
         chosenIndexes = random.sample(distinguishedIndexes, 10) +\
-                        random.sample(normalIndexes, 10)
+                        random.sample(normalIndexes, 0)
 
         taskdict = {}
         #for key, data in distinguishedSegments.iteritems():
@@ -151,9 +152,28 @@ class MainPage(webapp2.RequestHandler):
           task['camera3'] = shuffledIds[2]
           taskdict[name] = task
 
-
-        # initialize task
-        #taskdict = TaskDict()
+        metataskDict = {
+        'photo_experience': {
+          'name': 'photo_experience',
+          'label': 'How would you rate your experience in either photography or film editing?',
+          'choices': [('0','None'),
+                      ('1','Basic'),
+                      ('2','Hobbyist'),
+                      ('3','Serious hobbyist'),
+                      ('4','Professional')],
+           'selected': 'X'
+        },
+        'watch_experience': {
+          'name': 'watch_experience',
+          'label': 'How often do you watch live sports on TV/computer?',
+          'choices': [('0','Never'),
+                      ('1','Multiple times<br/> per year'),
+                      ('2','Multiple times<br/> per month'),
+                      ('3','Multiple times<br/> per week'),
+                      ('4','Daily')],
+           'selected': 'X'
+        },
+        }
 
         # read votes from db and augment task dictionary
         votesQuery = Vote.all().ancestor(userKey())
@@ -161,23 +181,22 @@ class MainPage(webapp2.RequestHandler):
         for vote in votes:
           taskName, suffix = vote.voteKey.split('_') 
           taskdict[taskName]['selected_%s' % suffix] = vote.cameraName
-#          try:
-#            taskdict[taskName]['selected_%s' % suffix] = vote.cameraName
-#          except KeyError:
-#            # that's 
-#            pass
+
+        metavotesQuery = Metavote.all().ancestor(userKey())
+        metavotes = metavotesQuery.fetch(50)
+        for vote in metavotes:
+          metataskDict[vote.voteKey]['selected'] = vote.value
 
         # we can now throw away the keys, so
         # convert augmented task dictionary to list.
-        #tasks = sorted(taskdict.iteritems(), key=operator.itemgetter(1))
-        #tasks = sorted(taskdict.itervalues(), key=lambda x: x['index'])
         tasks = taskdict.values()
         random.shuffle(tasks)
 
         template_values = {
-            'username': userName(),
-            'logout_url': logout_url,
-            'tasks': tasks
+          'username': userName(),
+          'logout_url': logout_url,
+          'tasks': tasks,
+          'metatasks': metataskDict.values()
         }
         template = jinja_environment.get_template('voting_template.html')
         self.response.out.write(template.render(template_values))
@@ -187,7 +206,28 @@ class RPCHandler(webapp2.RequestHandler):
   def post(self):
     req = json.loads(self.request.body)
     action = req['action']
-    if action == "vote":
+    if action == "metavote":
+      value = req['value']
+      if value != 'X':
+        result = {'status': 'stored'}
+      else:
+        result = {'status': 'neutral'}
+
+      key = req['key']
+      voteQuery = Metavote.all().ancestor(userKey()).filter("voteKey = ", key)
+      votes = voteQuery.fetch(1)
+      try:
+        vote = votes[0]
+      except IndexError:
+        vote = Metavote(parent=userKey())
+        vote.voteKey = req['key']
+      vote.value = value
+      vote.put()
+
+      # send result to client
+      self.response.out.write(json.dumps(result))
+
+    elif action == "vote":
       valueSplit = req['value'].split('_')
       radioValue = valueSplit[0]
       cameraName = valueSplit[1]
@@ -204,14 +244,6 @@ class RPCHandler(webapp2.RequestHandler):
         result['status'] = "failed"
 
         # jump back to old value
-        voteQuery = Vote.all().ancestor(userKey()).filter("voteKey = ", key)
-        votes = voteQuery.fetch(1)
-#####        try:
-#####          oldValue = votes[0].value
-#####        except IndexError:
-#####          oldValue = 0
-#####        result['oldValue'] = oldValue
-#####   JUST JUMP BACK TO 0, THATS OK
         result['oldValue'] = 0
         cameraName = 'X'
 

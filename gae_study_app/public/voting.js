@@ -1,11 +1,13 @@
-function doVote(button) {
-  $.ajax({
-    url: 'rpc',
-    data: JSON.stringify({
-      "action": "vote",
+function doVote(button, action) {
+  var ajaxData = JSON.stringify({
+      "action": action,
       "key": button.attr("name"),
       "value": button.val()
-    }),
+    });
+
+  $.ajax({
+    url: 'rpc',
+    data: ajaxData,
     cache: false,
     contentType: false,
     processData: false,

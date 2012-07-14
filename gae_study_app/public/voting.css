@@ -41,7 +41,7 @@ a.logout {
 
 .question-row {
   height: 24px;
-  vertical-align: bottom;
+  vertical-align: middle;
   font-size: 14px;
   color: #ddd;
   width: 100%;
@@ -121,8 +121,15 @@ h1, h2 {
   width: 90%;
 }
 
-.task {
+.metatask {
+  width: 800px;
+}
+
+.realtask {
   width: 1120px;
+}
+
+.task {
   border: medium solid #000;
   display: block;
   margin-left: auto;
@@ -156,6 +163,7 @@ h1, h2 {
   background-color: #2a2a2a;
   border-right: medium solid #222;
   padding: 3px;
+  width: 20px;
 }
 
 .playbutton-cell {
@@ -204,3 +212,6 @@ pre {
   border: thin dashed #000;
 }
 
+.metatask-choice-description {
+  width: 100px;
+}

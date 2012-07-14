@@ -30,15 +30,45 @@
     <div class="task-title">
       <h2>General Information</h2>
     </div>
-    <!--table class="task-media">
-      <tr class="question-row">
-        <td class="first-column"XXXXXXXXXXXX
-    </table-->
+    {% for task in metatasks %}
+    <h3>{{task.label}}</h3>
+    <div class="task metatask">
+      <table class="task-media" id="metatasks">
+        <tr class="button-row {%- if task.selected and task.selected != 'X' %} completed{%endif%}"
+            id="{{task.name}}">
+          <td class="first-column">
+              <input type="radio" class="metavote-button"
+                     name="{{task.name}}" value="X"
+                     id="{{task.name}}_X"
+                     {%- if (task.selected=='X') or (not task.selected) %} checked{% endif %} />
+          </td>
+          {% for choice in task.choices %}
+          <td>
+           <input type="radio" class="metavote-button"
+                  name="{{task.name}}" value="{{choice[0]}}"
+                  id="{{task.name}}_{{choice[0]}}"
+                  {%- if (task.selected==choice[0]) %} checked {% endif %}/>
+          </td>
+          {% endfor %}
+        </tr>
+        <tr class="question-row {%- if task.selected and task.selected != 'X' %} completed{%endif%}"
+            id="question_{{task.name}}">
+          <td class="first-column">
+          </td>
+          {% for choice in task.choices %}
+          <td class="metatask-choice-description">
+            {{ choice[1] }}
+          </td>
+          {% endfor %}
+        </tr>
+      </table>
+    </div>
+    {% endfor %}
     {% for task in tasks %}
       <div class="task-title">
         <h2>Task {{loop.index}} ({{ task.prettyName }})</h2>
       </div>
-      <div class="task">
+      <div class="task realtask">
         <table class="task-media" id="{{ task.name }}">
           <tr class="media-row">
             <td class="first-column"></td>
@@ -119,7 +149,10 @@
     <div class="bottomspacer"></div>
     <script>
       $("input[class='vote-button']").change(function() {
-        doVote($(this));
+        doVote($(this), "vote");
+      });
+      $("input[class='metavote-button']").change(function() {
+        doVote($(this), "metavote");
       });
     </script>
   </body>
