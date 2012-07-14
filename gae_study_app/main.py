@@ -83,7 +83,7 @@ class StatsHandler(BaseHandler):
       voteQuery = Vote.all()
       votes = voteQuery.fetch(9999)
       segments = collections.defaultdict(lambda: collections.defaultdict(int))
-      parentKeys = set()
+      parentKeys = collections.defaultdict(int)
       for vote in votes:
         result = re.match('segment(\d\d\d)_(.*)', vote.voteKey).groups()
         if result[1] == 'best':
@@ -91,15 +91,16 @@ class StatsHandler(BaseHandler):
         elif result[1] == 'worst':
           increment = -1
         segments[result[0]][vote.cameraName] += increment
-        parentKeys.add(vote.parent_key())
+        parentKeys[vote.parent_key()] += 1
 
       # get nice user list
       users = []
-      for key in parentKeys:
+      for key, count in parentKeys.items():
         user = {}
         (user['nickname'],
          user['age'],
          user['gender']) = key.name().split('__')
+        user['votes'] = count
         metavoteQuery = Metavote.all().ancestor(key)
         metavotes = metavoteQuery.fetch(10)
         metavoteDict = { m.voteKey:m.value for m in metavotes }

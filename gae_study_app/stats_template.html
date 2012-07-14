@@ -3,10 +3,10 @@
   </head>
   <body>
     <h1>Users</h1>
-      <pre>nickname age gender watch_experience photo_experience
+      <pre>nickname age gender watch_experience photo_experience tasks_solved
 
       {%- for user in users %}
-{{user.nickname}} {{user.age}} {{user.gender}} {{user.watch_experience}} {{user.photo_experience}}
+{{user.nickname}} {{user.age}} {{user.gender}} {{user.watch_experience}} {{user.photo_experience}} {{user.votes}}
       {%- endfor -%}
       </pre>
     <h1>Distinguished Segments</h1>
