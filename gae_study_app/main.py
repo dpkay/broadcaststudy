@@ -12,9 +12,6 @@ import sys
 import random
 import operator
 
-from google.appengine.ext import db
-from google.appengine.api import users
-
 from protorpc import messages
 from protorpc.wsgi import service
 from protorpc import remote
@@ -22,6 +19,8 @@ from protorpc import remote
 from webapp2_extras import auth 
 from webapp2_extras import sessions
 from webapp2_extras.appengine.auth import models
+
+from google.appengine.ext import db
 
 distinguishedIndexes = [40, 80, 120, 160, 190,
                         240, 280, 320, 360, 400]
@@ -43,23 +42,26 @@ class Metavote(db.Model):
   voteKey = db.StringProperty()
   value = db.StringProperty()
 
-def userId():
-  user = users.get_current_user()
-  if user:
-    return user.user_id()
-  else:
-    return 0
-
-
-def userKey(user_id_cmd=userId):
-  return db.Key.from_path('User', user_id_cmd())
-
-
-def userName():
-  return users.get_current_user().nickname()
-
 
 class BaseHandler(webapp2.RequestHandler):
+    def userId(self):
+      return '%s__%s__%s' % (self.session.get('nickname'),
+                             self.session.get('age'),
+                             self.session.get('gender'))
+    def userKey(self):
+      return db.Key.from_path('User', self.userId())
+
+    def userName(self):
+      return self.session.get('nickname')
+
+    def hasUserKey(self):
+      return (self.session.get('nickname') != None and
+              len(self.session.get('nickname')) > 0 and
+              self.session.get('age') != None and
+              int(self.session.get('age')) > 0 and
+              self.session.get('gender') != None and
+              self.session.get('gender') in ['m', 'f'])
+
     def dispatch(self):
         # Get a session store for this request.
         self.session_store = sessions.get_store(request=self.request)
@@ -116,15 +118,10 @@ class StatsHandler(BaseHandler):
 
 class StudyHandler(BaseHandler):
     def get(self):
-        if users.get_current_user():
-          #logout_url = users.create_logout_url(self.request.uri)
-          logout_url = "/logout"
-        else:
-          self.redirect(users.create_login_url(self.request.uri))
-          return
+        if not self.hasUserKey():
+          self.redirect('/')
 
-        print >>sys.stderr,userId(),userKey()
-        random.seed(userId())
+        random.seed(self.userId())
 
         # initialize segments
         #distinguishedSegments = SegmentDict('distinguished_segments.yaml')
@@ -135,8 +132,8 @@ class StudyHandler(BaseHandler):
         #for i in distinguishedIndexes:
         #  distinguishedSegments[i] = allSegments[i]
 
-        chosenIndexes = random.sample(distinguishedIndexes, 10) +\
-                        random.sample(normalIndexes, 0)
+        chosenIndexes = random.sample(distinguishedIndexes, 5) +\
+                        random.sample(normalIndexes, 25)
 
         taskdict = {}
         #for key, data in distinguishedSegments.iteritems():
@@ -185,13 +182,13 @@ class StudyHandler(BaseHandler):
         }
 
         # read votes from db and augment task dictionary
-        votesQuery = Vote.all().ancestor(userKey())
+        votesQuery = Vote.all().ancestor(self.userKey())
         votes = votesQuery.fetch(500)
         for vote in votes:
           taskName, suffix = vote.voteKey.split('_') 
           taskdict[taskName]['selected_%s' % suffix] = vote.cameraName
 
-        metavotesQuery = Metavote.all().ancestor(userKey())
+        metavotesQuery = Metavote.all().ancestor(self.userKey())
         metavotes = metavotesQuery.fetch(50)
         for vote in metavotes:
           metataskDict[vote.voteKey]['selected'] = vote.value
@@ -205,7 +202,6 @@ class StudyHandler(BaseHandler):
           'username': '%s (%s, %s)' % (self.session.get('nickname'),
                                        self.session.get('age'),
                                        self.session.get('gender')),
-          'logout_url': logout_url,
           'tasks': tasks,
           'metatasks': metataskDict.values()
         }
@@ -225,12 +221,12 @@ class RPCHandler(BaseHandler):
         result = {'status': 'neutral'}
 
       key = req['key']
-      voteQuery = Metavote.all().ancestor(userKey()).filter("voteKey = ", key)
+      voteQuery = Metavote.all().ancestor(self.userKey()).filter("voteKey = ", key)
       votes = voteQuery.fetch(1)
       try:
         vote = votes[0]
       except IndexError:
-        vote = Metavote(parent=userKey())
+        vote = Metavote(parent=self.userKey())
         vote.voteKey = req['key']
       vote.value = value
       vote.put()
@@ -248,7 +244,7 @@ class RPCHandler(BaseHandler):
       key = req['key']
       keySplit = req['key'].split('_')
       keyOpposite = keySplit[0] + '_' + ('best' if keySplit[1] == 'worst' else 'worst')
-      voteQuery = Vote.all().ancestor(userKey()).filter("voteKey = ", keyOpposite)
+      voteQuery = Vote.all().ancestor(self.userKey()).filter("voteKey = ", keyOpposite)
       votes = voteQuery.fetch(1)
       if radioValue>0 and len(votes)>0 and votes[0].cameraName == cameraName:
         # don't allow best and worst to have the same value
@@ -265,12 +261,12 @@ class RPCHandler(BaseHandler):
         else:
           result['status'] = "neutral"
 
-      voteQuery = Vote.all().ancestor(userKey()).filter("voteKey = ", key)
+      voteQuery = Vote.all().ancestor(self.userKey()).filter("voteKey = ", key)
       votes = voteQuery.fetch(1)
       try:
         vote = votes[0]
       except IndexError:
-        vote = Vote(parent=userKey())
+        vote = Vote(parent=self.userKey())
         vote.voteKey = req['key']
       vote.cameraName = cameraName
       vote.put()
@@ -285,16 +281,11 @@ class RPCHandler(BaseHandler):
 
 class LoginHandler(BaseHandler):
   def get(self):
-      if (self.session.get('nickname') != None and
-          self.session.get('nickname') != None and
-          self.session.get('nickname') != None):
+      if (self.hasUserKey()):
           self.redirect('/study')
 
       else:
-        template_values = {
-          'myfoo': self.session.get('nickname')
-        }
-        self.session['foo']='barxxasdf'
+        template_values = { }
         template = jinja_environment.get_template('login_template.html')
         self.response.out.write(template.render(template_values))
 
@@ -307,9 +298,11 @@ class LoginHandler(BaseHandler):
 
 class LogoutHandler(BaseHandler):
   def get(self):
-    del self.session['nickname'] 
-    del self.session['age'] 
-    del self.session['gender'] 
+    if not self.hasUserKey():
+      self.redirect('/')
+    self.session['nickname'] = None
+    self.session['age'] = None
+    self.session['gender'] = None
     self.redirect('/')
 
 app = webapp2.WSGIApplication([('/', LoginHandler),

@@ -135,6 +135,7 @@ h1, h2 {
   display: block;
   margin-left: auto;
   margin-right: auto;
+  margin-bottom: 0px;
 }
 
 .taskspacer {
@@ -144,6 +145,7 @@ h1, h2 {
 .task-title {
   color: #333;
   height: 50px;
+  margin-top: 50px;
 }
 
 .topspacer, .bottomspacer {

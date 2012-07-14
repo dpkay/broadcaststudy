@@ -8,13 +8,14 @@
   </head>
   <body onload="updateCount()">
     <div class="topspacer"></div>
-    <h1>Sports Performance User Study</h1>
+    <h1>Sports Broadcast Study</h1>
     <p>
-    Nullam in felis non sapien egestas ullamcorper. Nulla facilisi. Morbi elit dui, egestas ut facilisis sit amet, scelerisque eget libero. Cras pellentesque laoreet odio at rhoncus. Pellentesque euismod elit non orci faucibus vitae cursus dolor iaculis. Praesent imperdiet dolor turpis, sed pulvinar justo. Donec porttitor mollis eros, non sodales diam euismod viverra. Quisque laoreet tincidunt laoreet.
+    Thank you for agreeing to participate in this study.<br/>
+    Before we get started, please tell us something about your previous experience:
     </p>
     <div class="statusbar statusbar-top">
       <div class="statusbar-content">
-        Welcome, {{ username }}! <a href="{{logout_url}}" class="logout">Logout</a>
+        Welcome, {{ username }}! <a href="/logout" class="logout">Logout</a>
       </div>
     </div>
     <div class="statusbar statusbar-bottom">
@@ -27,9 +28,9 @@
         answered.
       </div>
     </div>
-    <div class="task-title">
-      <h2>General Information</h2>
-    </div>
+    <!--div class="task-title">
+      <h2>Your prior knowledge:</h2>
+    </div-->
     {% for task in metatasks %}
     <h3>{{task.label}}</h3>
     <div class="task metatask">
@@ -64,9 +65,13 @@
       </table>
     </div>
     {% endfor %}
+    
+    <p style="margin-top: 70px">
+    In the following, you will be presented with 30 tasks. In each task, you have three different camera angles for the same 5-second game period in a field hockey match. Please watch the three clips and tell us which angle you like most and which one you like the least.</p><p>When you judge the video clips, please pay more attention to the composition and smoothness of the video, rather than to the image quality.
+    </p>
     {% for task in tasks %}
       <div class="task-title">
-        <h2>Task {{loop.index}} ({{ task.prettyName }})</h2>
+        <h3>Task {{loop.index}} ({{ task.prettyName }})</h3>
       </div>
       <div class="task realtask">
         <table class="task-media" id="{{ task.name }}">
@@ -146,6 +151,8 @@
       <div class="taskspacer"></div>
     {% endfor %}
     <h2>Thank you very much for your participation!</h2>
+    <p>Your results have been saved.<br/>
+       You may close this window once all the questions are answered.</p>
     <div class="bottomspacer"></div>
     <script>
       $("input[class='vote-button']").change(function() {
