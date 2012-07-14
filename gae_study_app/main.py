@@ -16,9 +16,7 @@ from protorpc import messages
 from protorpc.wsgi import service
 from protorpc import remote
 
-from webapp2_extras import auth 
 from webapp2_extras import sessions
-from webapp2_extras.appengine.auth import models
 
 from google.appengine.ext import db
 
@@ -58,6 +56,7 @@ class BaseHandler(webapp2.RequestHandler):
       return (self.session.get('nickname') != None and
               len(self.session.get('nickname')) > 0 and
               self.session.get('age') != None and
+              len(self.session.get('age')) > 0 and
               int(self.session.get('age')) > 0 and
               self.session.get('gender') != None and
               self.session.get('gender') in ['m', 'f'])
@@ -199,9 +198,7 @@ class StudyHandler(BaseHandler):
         random.shuffle(tasks)
 
         template_values = {
-          'username': '%s (%s, %s)' % (self.session.get('nickname'),
-                                       self.session.get('age'),
-                                       self.session.get('gender')),
+          'username': self.userName(),
           'tasks': tasks,
           'metatasks': metataskDict.values()
         }
