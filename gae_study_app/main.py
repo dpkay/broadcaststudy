@@ -19,6 +19,10 @@ from protorpc import messages
 from protorpc.wsgi import service
 from protorpc import remote
 
+from webapp2_extras import auth 
+from webapp2_extras import sessions
+from webapp2_extras.appengine.auth import models
+
 distinguishedIndexes = [40, 80, 120, 160, 190,
                         240, 280, 320, 360, 400]
 
@@ -30,20 +34,6 @@ class SegmentDict(dict):
   def __init__(self, filename):
     with file(filename, 'r') as stream:
       super(SegmentDict, self).__init__(yaml.load(stream))
-#      for key, clips in yaml.load(stream).iteritems()
-#        self[key] = item
-
-#distinguishedSegments = SegmentDict('distinguished_segments.yaml')
-
-#class TaskDict(dict):
-#  def __init__(self):
-#    with file('tasks.yaml', 'r') as stream:
-#      for item in yaml.load(stream):
-#        self[item['name']] = item
-#
-#
-#print "foo"
-#print TaskDict()
 
 class Vote(db.Model):
   voteKey = db.StringProperty()
@@ -69,7 +59,25 @@ def userName():
   return users.get_current_user().nickname()
 
 
-class StatsHandler(webapp2.RequestHandler):
+class BaseHandler(webapp2.RequestHandler):
+    def dispatch(self):
+        # Get a session store for this request.
+        self.session_store = sessions.get_store(request=self.request)
+
+        try:
+            # Dispatch the request.
+            super(BaseHandler, self).dispatch()
+        finally:
+            # Save all sessions.
+            self.session_store.save_sessions(self.response)
+
+    @webapp2.cached_property
+    def session(self):
+        # Returns a session using the default cookie key.
+        return self.session_store.get_session()
+
+
+class StatsHandler(BaseHandler):
     def get(self):
       voteQuery = Vote.all()
       votes = voteQuery.fetch(9999)
@@ -106,10 +114,11 @@ class StatsHandler(webapp2.RequestHandler):
       template = jinja_environment.get_template('stats_template.html')
       self.response.out.write(template.render(template_values))
 
-class MainPage(webapp2.RequestHandler):
+class StudyHandler(BaseHandler):
     def get(self):
         if users.get_current_user():
-          logout_url = users.create_logout_url(self.request.uri)
+          #logout_url = users.create_logout_url(self.request.uri)
+          logout_url = "/logout"
         else:
           self.redirect(users.create_login_url(self.request.uri))
           return
@@ -193,7 +202,9 @@ class MainPage(webapp2.RequestHandler):
         random.shuffle(tasks)
 
         template_values = {
-          'username': userName(),
+          'username': '%s (%s, %s)' % (self.session.get('nickname'),
+                                       self.session.get('age'),
+                                       self.session.get('gender')),
           'logout_url': logout_url,
           'tasks': tasks,
           'metatasks': metataskDict.values()
@@ -202,7 +213,7 @@ class MainPage(webapp2.RequestHandler):
         self.response.out.write(template.render(template_values))
 
 
-class RPCHandler(webapp2.RequestHandler):
+class RPCHandler(BaseHandler):
   def post(self):
     req = json.loads(self.request.body)
     action = req['action']
@@ -271,7 +282,45 @@ class RPCHandler(webapp2.RequestHandler):
       #self.response.out.write(json.loads(self.request.body))
       self.error(403)
 
-app = webapp2.WSGIApplication([('/', MainPage),
+
+class LoginHandler(BaseHandler):
+  def get(self):
+      if (self.session.get('nickname') != None and
+          self.session.get('nickname') != None and
+          self.session.get('nickname') != None):
+          self.redirect('/study')
+
+      else:
+        template_values = {
+          'myfoo': self.session.get('nickname')
+        }
+        self.session['foo']='barxxasdf'
+        template = jinja_environment.get_template('login_template.html')
+        self.response.out.write(template.render(template_values))
+
+  def post(self):
+      self.session['nickname'] = self.request.get('nickname')
+      self.session['age'] = self.request.get('age')
+      self.session['gender'] = self.request.get('gender')
+      self.redirect('/')
+
+
+class LogoutHandler(BaseHandler):
+  def get(self):
+    del self.session['nickname'] 
+    del self.session['age'] 
+    del self.session['gender'] 
+    self.redirect('/')
+
+app = webapp2.WSGIApplication([('/', LoginHandler),
+                               ('/study', StudyHandler),
                                ('/rpc', RPCHandler),
+                               ('/logout', LogoutHandler),
                                ('/stats', StatsHandler)],
-                              debug=True)
+                              debug=True,
+                              config={
+                                'webapp2_extras.sessions':
+                                {
+                                  'secret_key': 'jflmcgsdljkghdflsjgkhsm'
+                                }
+                              })
